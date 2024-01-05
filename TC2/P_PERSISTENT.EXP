@@ -1,0 +1,51 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @SYMFILEFLAGS := '2048' *)
+(*********************************************************************************************************************************)
+(*							Beckhoff Automation Poland										*)
+(*								P_Persistent	 v1.1												*)
+(*									14.12.2010												*)
+(*	Przyk³adowy program zapisu zmiennych do obszaru PERSISTENT								*)
+(*	Adres MX3000.0 zosta³ wykorzystany na ustawienie flagi zapisu parametrów. 						*)
+(*	Pierwszy wolny adres dla zmiennej typu BOOL to MX3000.1										*)
+(*	Pierwszy wolny adres dla zmiennej typu BYTE to MB3001										*)
+(*	Adres pozosta³ych typów zmiennych musi byæ podzielny przez ich rozmiar, np dla zmiennej INT MB3002	*)
+(*___________________________________________________________________________________________*)
+PROGRAM P_Persistent
+VAR
+	i: INT;
+	Marks_Persistent AT %MX3000.0: BOOL;
+	Persitent_Data:Persistent_Data;
+END_VAR
+(* @END_DECLARATION := '0' *)
+IF NOT Marks_Persistent THEN
+	i:=10;
+END_IF
+
+CASE i OF
+10:	Persitent_Data(
+	bRead:= ,
+	bWrite:=TRUE ,
+	bDelete:= ,
+	WriteSize:=100 ,
+	WriteOffset:=3000 ,
+	bBusy=> ,
+	bError=> ,
+	iErrorId=> ,
+	ReadSize=> ,
+	ReadOffset=> );
+	IF NOT Persitent_Data.bBusy THEN
+		IF NOT Persitent_Data.bError THEN
+			Marks_Persistent:=TRUE;
+			i:=20;
+		ELSE
+			i:=100;
+		END_IF
+		Persitent_Data(BWrite:=FALSE);
+	END_IF
+20:	;(* OK and End *)
+100:	;(*Error*)
+END_CASE
+
+END_PROGRAM

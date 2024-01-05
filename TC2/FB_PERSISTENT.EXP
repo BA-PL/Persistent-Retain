@@ -1,0 +1,184 @@
+
+(* @NESTEDCOMMENTS := 'Yes' *)
+(* @PATH := '' *)
+(* @OBJECTFLAGS := '0, 8' *)
+(* @SYMFILEFLAGS := '2048' *)
+FUNCTION_BLOCK FB_Persistent
+
+(*********************************************************************************************************************************)
+(*								Beckhoff Automation Poland												*)
+(* 									FB_Persistent 	v1.5												*)
+(* 										20.08.2014														*)
+(* 							v1.5 - zmiana minimalnego interwalu zapisu									*)
+(* 					Blok funkcyjny zapisuj¹cy zmienne typu persistent na karcie CF						*)
+(* 						Mo¿liwy zapis na ¿¹danie lub z okreœlon¹ czêstotliwoœci¹.  						*)
+(* 				Pozostawienie wejscia tInterval bez zmiennej wy³acza funkcjê zapisu cyklicznego			*)
+(* 							Minimalny czas miêdzy zapisem cyklicznym 30s								*)
+(* 				Konieczne jest dodanie biblioteki TcUtilities.lib, TcSystem.lib oraz TcBase.lib					*)
+(*			 UWAGA: Blok przygotowany dla RunTime 1 port 801 - typowa konfiguracja 					*)
+(*_____________________________________________________________________________________*)
+
+VAR_INPUT
+	bWrite			: BOOL;							(*Zapis na rozkaz *)
+	tInterval			: TIME:=T#71582m47s295ms;		(*Czestotliwosc zapisu na karte CF*)
+END_VAR
+VAR_OUTPUT
+	bBusy			: BOOL;
+	bErr			: BOOL;
+	udErrID			: UDINT;
+END_VAR
+VAR
+	fbWritePersistentData	: FB_WritePersistentData; 	(* Blok zapisu *)
+	t1						: TON;						(* Timer zapisu *)
+	_GETCURTASKINDEX	: GETCURTASKINDEX;		(* Informacja o Tasku *)
+	BIndex					: BYTE;						(* Nr tasku *)
+END_VAR
+(* @END_DECLARATION := '0' *)
+_FBD_BODY
+_NETWORKS : 4
+_NETWORK
+
+_COMMENT
+'Comment: Zabezpieczenie karty - czestotliwosc zapisu nie moze byc mniejsza niz 30s'
+_END_COMMENT
+_ASSIGN
+_OPERATOR
+_BOX_EXPR : 3
+_OPERATOR
+_BOX_EXPR : 2
+_OPERAND
+_EXPRESSION
+_POSITIV
+tInterval
+_OPERAND
+_EXPRESSION
+_POSITIV
+T#30s
+_EXPRESSION
+_POSITIV
+LT
+_OPERAND
+_EXPRESSION
+_POSITIV
+tInterval
+_OPERAND
+_EXPRESSION
+_POSITIV
+T#30s
+_EXPRESSION
+_POSITIV
+SEL
+_EXPRESSION
+_POSITIV
+_OUTPUTS : 1
+_OUTPUT
+_POSITIV
+_NO_SET
+tInterval
+_NETWORK
+
+_COMMENT
+'Comment: Wyzwalanie zapisu'
+_END_COMMENT
+_FUNCTIONBLOCK
+t1
+_BOX_EXPR : 2
+_OPERAND
+_EXPRESSION
+_NEGATIV
+t1.Q
+_OPERAND
+_EXPRESSION
+_POSITIV
+tInterval
+_EXPRESSION
+_POSITIV
+TON
+_OUTPUTS : 1
+_OUTPUT
+_POSITIV
+_NO_SET
+_EMPTY
+_NETWORK
+
+_COMMENT
+''
+_END_COMMENT
+_ASSIGN
+_FUNCTIONBLOCK
+_GETCURTASKINDEX
+_BOX_EXPR : 0
+_EXPRESSION
+_POSITIV
+GETCURTASKINDEX
+_OUTPUTS : 0
+_EXPRESSION
+_POSITIV
+_OUTPUTS : 1
+_OUTPUT
+_POSITIV
+_NO_SET
+BIndex
+_NETWORK
+
+_COMMENT
+'Comment: Blok zapisu'
+_END_COMMENT
+_ASSIGN
+_FUNCTIONBLOCK
+fbWritePersistentData
+_BOX_EXPR : 5
+_OPERAND
+_EXPRESSION
+_POSITIV
+''
+_OPERAND
+_EXPRESSION
+_POSITIV
+801
+_OPERATOR
+_BOX_EXPR : 3
+_OPERAND
+_EXPRESSION
+_POSITIV
+SystemTaskInfoArr[BIndex].firstCycle
+_OPERAND
+_EXPRESSION
+_POSITIV
+bWrite
+_OPERAND
+_EXPRESSION
+_POSITIV
+t1.Q
+_EXPRESSION
+_POSITIV
+OR
+_OPERAND
+_EXPRESSION
+_POSITIV
+_EMPTY
+_OPERAND
+_EXPRESSION
+_POSITIV
+SPDM_2PASS
+_EXPRESSION
+_POSITIV
+FB_WRITEPERSISTENTDATA
+_OUTPUTS : 2
+_OUTPUT
+_POSITIV
+_NO_SET
+bErr
+_OUTPUT
+_POSITIV
+_NO_SET
+udErrid
+_EXPRESSION
+_POSITIV
+_OUTPUTS : 1
+_OUTPUT
+_POSITIV
+_NO_SET
+bBusy
+
+END_FUNCTION_BLOCK
